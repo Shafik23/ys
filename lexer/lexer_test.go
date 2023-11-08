@@ -67,6 +67,7 @@ func TestLexer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := NewLexer(tt.input)
+
 			for j, expected := range tt.expected {
 				tok, _ := l.Next()
 
@@ -80,6 +81,7 @@ func TestLexer(t *testing.T) {
 						tt.name, j, expected, tok)
 				}
 			}
+
 			// Check for EOF at the end.
 			if tok, _ := l.Next(); tok != EOF {
 				t.Fatalf("%s - tokens at the end. expected EOF, got=%q", tt.name, tok)
