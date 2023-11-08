@@ -14,7 +14,7 @@ func TestLexer(t *testing.T) {
 		{
 			name:     "Simple arithmetic",
 			input:    "10 + 25 - 8",
-			expected: []Token{INTEGER, PLUS, INTEGER, MINUS, INTEGER},
+			expected: []Token{INT, PLUS, INT, MINUS, INT},
 		},
 		{
 			name:     "Single plus",
@@ -44,12 +44,12 @@ func TestLexer(t *testing.T) {
 		{
 			name:     "Numbers with whitespace",
 			input:    "10   20  30",
-			expected: []Token{INTEGER, INTEGER, INTEGER},
+			expected: []Token{INT, INT, INT},
 		},
 		{
 			name:     "Mixed whitespace",
 			input:    "10 +\n25 -   8",
-			expected: []Token{INTEGER, PLUS, INTEGER, MINUS, INTEGER},
+			expected: []Token{INT, PLUS, INT, MINUS, INT},
 		},
 		{
 			name:     "Newlines",
@@ -59,7 +59,7 @@ func TestLexer(t *testing.T) {
 		{
 			name:     "Complex expression",
 			input:    "10+20-30+40-50",
-			expected: []Token{INTEGER, PLUS, INTEGER, MINUS, INTEGER, PLUS, INTEGER, MINUS, INTEGER},
+			expected: []Token{INT, PLUS, INT, MINUS, INT, PLUS, INT, MINUS, INT},
 		},
 		// Add more complex test cases here as you expand your lexer's capabilities.
 	}
@@ -69,11 +69,11 @@ func TestLexer(t *testing.T) {
 			l := NewLexer(tt.input)
 
 			for j, expected := range tt.expected {
-				tok, _ := l.Next()
+				tok, _ := l.NextToken()
 
 				// Skip whitespace tokens.
 				for tok == WS {
-					tok, _ = l.Next()
+					tok, _ = l.NextToken()
 				}
 
 				if tok != expected {
@@ -83,7 +83,7 @@ func TestLexer(t *testing.T) {
 			}
 
 			// Check for EOF at the end.
-			if tok, _ := l.Next(); tok != EOF {
+			if tok, _ := l.NextToken(); tok != EOF {
 				t.Fatalf("%s - tokens at the end. expected EOF, got=%q", tt.name, tok)
 			}
 		})
