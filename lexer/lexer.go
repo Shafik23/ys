@@ -5,59 +5,22 @@ package lexer
 import (
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/shafik23/ys/token"
 )
 
-type Token int
-
-const (
-	// Special tokens
-	ILLEGAL Token = iota
-	EOF
-	WS
-
-	// Symbols
-	ASSIGN
-	PLUS
-	MINUS
-	ASTERISK
-	SLASH
-	BANG
-	LT
-	GT
-	EQ
-	NOT_EQ
-
-	// Delimiters
-	COMMA
-	SEMICOLON
-	LPAREN
-	RPAREN
-	LBRACE
-	RBRACE
-
-	// Literals
-	IDENT // identifiers
-	INT   // integers
-	STR   // string literals
-
-	// Keywords
-	FUNCTION
-	LET
-	IF
-	ELSE
-	RETURN
-)
-
-// define a map for keywords
-var keywords = map[string]Token{
-	"fn":     FUNCTION,
-	"let":    LET,
-	"if":     IF,
-	"else":   ELSE,
-	"return": RETURN,
+// keywords defines a map for reserved words and their token types.
+var keywords = map[string]token.TokenType{
+	"fn":     token.FUNCTION,
+	"let":    token.LET,
+	"if":     token.IF,
+	"else":   token.ELSE,
+	"return": token.RETURN,
+	"true":   token.TRUE,
+	"false":  token.FALSE,
 }
 
-// Lexer represents a lexer.
+// Lexer represents a lexer with the input, current position, and reading position.
 type Lexer struct {
 	input        string
 	pos          int  // current position in input (points to current char)
@@ -83,9 +46,10 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
-// NextToken returns the next token and literal value.
-func (l *Lexer) NextToken() (tok Token, literal string) {
-	var lit string
+// NextToken returns the next token from the input.
+func (l *Lexer) NextToken() token.Token {
+	var tok token.Token
+
 	l.skipWhitespace()
 
 	switch l.ch {
@@ -93,86 +57,78 @@ func (l *Lexer) NextToken() (tok Token, literal string) {
 		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
-			lit = string(ch) + string(l.ch)
-			tok = EQ
+			tok = token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
 		} else {
-			tok = ASSIGN
-			lit = string(l.ch)
+			tok = token.Token{Type: token.ASSIGN, Literal: string(l.ch)}
 		}
 	case ';':
-		tok = SEMICOLON
-		lit = string(l.ch)
+		tok = newToken(token.SEMICOLON, l.ch)
 	case '(':
-		tok = LPAREN
-		lit = string(l.ch)
+		tok = newToken(token.LPAREN, l.ch)
 	case ')':
-		tok = RPAREN
-		lit = string(l.ch)
+		tok = newToken(token.RPAREN, l.ch)
 	case ',':
-		tok = COMMA
-		lit = string(l.ch)
+		tok = newToken(token.COMMA, l.ch)
 	case '+':
-		tok = PLUS
-		lit = string(l.ch)
+		tok = newToken(token.PLUS, l.ch)
 	case '-':
-		tok = MINUS
-		lit = string(l.ch)
+		tok = newToken(token.MINUS, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
 	case '!':
 		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
-			lit = string(ch) + string(l.ch)
-			tok = NOT_EQ
+			tok = token.Token{Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
 		} else {
-			tok = BANG
-			lit = string(l.ch)
+			tok = newToken(token.BANG, l.ch)
 		}
 	case '/':
-		tok = SLASH
-		lit = string(l.ch)
+		if l.peekChar() == '/' {
+			// Do not advance the lexer here; readComment will handle it
+			tok.Type = token.COMMENT
+			tok.Literal = l.readComment()
+		} else {
+			tok = newToken(token.SLASH, l.ch)
+		}
 	case '*':
-		tok = ASTERISK
-		lit = string(l.ch)
+		tok = newToken(token.ASTERISK, l.ch)
 	case '<':
-		tok = LT
-		lit = string(l.ch)
+		tok = newToken(token.LT, l.ch)
 	case '>':
-		tok = GT
-		lit = string(l.ch)
+		tok = newToken(token.GT, l.ch)
 	case '{':
-		tok = LBRACE
-		lit = string(l.ch)
+		tok = newToken(token.LBRACE, l.ch)
 	case '}':
-		tok = RBRACE
-		lit = string(l.ch)
+		tok = newToken(token.RBRACE, l.ch)
 	case 0:
-		tok = EOF
-		lit = ""
+		tok.Literal = ""
+		tok.Type = token.EOF
 	default:
 		if isLetter(l.ch) {
-			lit = l.readIdentifier()
-			tok = lookupIdent(lit)
-			return tok, lit
+			tok.Literal = l.readIdentifier()
+			tok.Type = lookupIdent(tok.Literal)
+			return tok
 		} else if unicode.IsDigit(l.ch) {
-			tok = INT
-			lit = l.readNumber()
-			return tok, lit
+			tok.Type = token.INT
+			tok.Literal = l.readNumber()
+			return tok
 		} else {
-			tok = ILLEGAL
-			lit = string(l.ch)
+			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	}
 
 	l.readChar()
-	return tok, lit
+	return tok
 }
 
 // lookupIdent checks the keywords table to see whether the given identifier is in fact a keyword.
-func lookupIdent(ident string) Token {
+func lookupIdent(ident string) token.TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok
 	}
-	return IDENT
+	return token.IDENT
 }
 
 // readIdentifier reads in an identifier and advances the lexer's positions until it encounters a non-letter-character.
@@ -210,7 +166,36 @@ func (l *Lexer) peekChar() rune {
 	}
 }
 
+// readString reads a string enclosed in double quotes.
+func (l *Lexer) readString() string {
+	position := l.pos + 1 // skip the initial quote
+	for {
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
+	return l.input[position:l.pos]
+}
+
+// readComment reads a comment (single line for now).
+func (l *Lexer) readComment() string {
+	position := l.pos // start from the initial '/'
+	for {
+		l.readChar()
+		if l.ch == '\n' || l.ch == 0 {
+			break
+		}
+	}
+	return l.input[position:l.pos]
+}
+
 // isLetter checks if the character is a letter or underscore.
 func isLetter(ch rune) bool {
 	return unicode.IsLetter(ch) || ch == '_'
+}
+
+// newToken is a helper function to create new tokens.
+func newToken(tokenType token.TokenType, ch rune) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }
