@@ -5,18 +5,21 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/shafik23/ys/lexer"
 	"github.com/shafik23/ys/token"
 )
 
-// Start launches the REPL.
-func Start() {
-	scanner := bufio.NewScanner(os.Stdin)
+const PROMPT = ">> "
+
+// Start launches the REPL, taking input from an io.Reader and sending output to an io.Writer.
+func Start(in io.Reader, out io.Writer) {
+	scanner := bufio.NewScanner(in)
 
 	for {
-		fmt.Printf(">> ")
+		fmt.Fprint(out, PROMPT)
+
 		scanned := scanner.Scan()
 		if !scanned {
 			return
@@ -31,7 +34,7 @@ func Start() {
 				break
 			}
 
-			fmt.Printf("%+v\n", tok)
+			fmt.Fprintf(out, "%+v\n", tok)
 		}
 	}
 }
