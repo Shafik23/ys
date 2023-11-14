@@ -127,7 +127,7 @@ func TestLexer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := NewLexer(tt.input)
+			l := New(tt.input)
 
 			for i, expected := range tt.expected {
 				tok := l.NextToken()

@@ -28,8 +28,8 @@ type Lexer struct {
 	ch           rune // current char under examination
 }
 
-// NewLexer returns a new instance of Lexer.
-func NewLexer(input string) *Lexer {
+// New returns a new instance of Lexer.
+func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar() // Initialize the first char
 	return l
