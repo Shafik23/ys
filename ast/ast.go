@@ -58,3 +58,15 @@ func (i *Identifier) TokenLiteral() string {
 }
 
 ////////////////////////////////////////////////////////////////
+
+type ReturnStatement struct {
+	Token       token.Token // the token.RETURN token
+	ReturnValue Expression  // the value the return statement returns
+}
+
+func (rs *ReturnStatement) statementNode() {}
+func (rs *ReturnStatement) TokenLiteral() string {
+	return rs.Token.Literal
+}
+
+////////////////////////////////////////////////////////////////
