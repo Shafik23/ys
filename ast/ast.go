@@ -156,3 +156,25 @@ func (il *IntegerLiteral) String() string {
 }
 
 ////////////////////////////////////////////////////////////////
+
+type PrefixExpression struct {
+	Token    token.Token // the prefix operator, e.g. !
+	Operator string      // the prefix operator, e.g. !
+	Right    Expression  // the right-hand side expression
+}
+
+func (pe *PrefixExpression) expressionNode() {}
+func (pe *PrefixExpression) TokenLiteral() string {
+	return pe.Token.Literal
+}
+
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(") // append the opening parenthesis
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")") // append the closing parenthesis
+
+	return out.String()
+}

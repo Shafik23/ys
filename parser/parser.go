@@ -42,6 +42,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn) // initialize the map
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.BANG, p.parsePrefixExpression)
+	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
 	// Read two tokens, so curToken and peekToken are both set.
 	p.nextToken()
@@ -173,7 +175,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type] // get the prefix parse function for the current token type
 
 	if prefix == nil { // if there is no prefix parse function
-		return nil // return nil
+		p.noPrefixParseFnError(p.curToken.Type) // add an error to the errors slice
+		return nil                              // return nil
 	}
 
 	leftExp := prefix() // parse the prefix expression
@@ -195,4 +198,19 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	lit.Value = value // set the value field
 
 	return lit
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t) // create an error message
+	p.errors = append(p.errors, msg)                               // append it to the errors slice
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal} // create a new prefix expression node and set its token and operator fields
+
+	p.nextToken() // advance the tokens
+
+	expression.Right = p.parseExpression(PREFIX) // parse the right expression
+
+	return expression
 }
