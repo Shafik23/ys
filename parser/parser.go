@@ -17,6 +17,9 @@ type Parser struct {
 	errors []string
 }
 
+type prefixParseFn func() ast.Expression
+type infixParseFn func(ast.Expression) ast.Expression
+
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 
