@@ -8,26 +8,48 @@ import (
 	"github.com/shafik23/ys/token"
 )
 
+const (
+	_ int = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // > or <
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // -X or !X
+	CALL        // myFunction(X)
+)
+
+type prefixParseFn func() ast.Expression
+type infixParseFn func(ast.Expression) ast.Expression
+
 type Parser struct {
 	l *lexer.Lexer
 
 	curToken  token.Token
 	peekToken token.Token
 
+	prefixParseFns map[token.TokenType]prefixParseFn // map of prefix parse functions
+	infixParseFns  map[token.TokenType]infixParseFn  // map of infix parse functions
+
 	errors []string
 }
 
-type prefixParseFn func() ast.Expression
-type infixParseFn func(ast.Expression) ast.Expression
-
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
+
+	// Register prefix parse functions
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn) // initialize the map
+	p.registerPrefix(token.IDENT, p.parseIdentifier)           // register the parseIdentifier function
 
 	// Read two tokens, so curToken and peekToken are both set.
 	p.nextToken()
 	p.nextToken()
 
 	return p
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) nextToken() {
@@ -59,7 +81,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN: // if it is a return statement
 		return p.parseReturnStatement() // parse it
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
@@ -123,4 +145,36 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn // register a prefix parse function for a given token type
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn // register an infix parse function for a given token type
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken} // create a new expression statement node and set its token field
+
+	stmt.Expression = p.parseExpression(LOWEST) // parse the expression
+
+	if p.peekTokenIs(token.SEMICOLON) { // if the next token is a semicolon
+		p.nextToken() // advance the tokens
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.curToken.Type] // get the prefix parse function for the current token type
+
+	if prefix == nil { // if there is no prefix parse function
+		return nil // return nil
+	}
+
+	leftExp := prefix() // parse the prefix expression
+
+	return leftExp
 }
