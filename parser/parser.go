@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/shafik23/ys/ast"
 	"github.com/shafik23/ys/lexer"
@@ -39,7 +40,8 @@ func New(l *lexer.Lexer) *Parser {
 
 	// Register prefix parse functions
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn) // initialize the map
-	p.registerPrefix(token.IDENT, p.parseIdentifier)           // register the parseIdentifier function
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
+	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 
 	// Read two tokens, so curToken and peekToken are both set.
 	p.nextToken()
@@ -177,4 +179,20 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	leftExp := prefix() // parse the prefix expression
 
 	return leftExp
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	lit := &ast.IntegerLiteral{Token: p.curToken} // create a new integer literal node and set its token field
+
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64) // parse the integer literal
+
+	if err != nil { // if there was an error
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal) // create an error message
+		p.errors = append(p.errors, msg)                                        // append it to the errors slice
+		return nil                                                              // return nil
+	}
+
+	lit.Value = value // set the value field
+
+	return lit
 }
