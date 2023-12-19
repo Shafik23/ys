@@ -178,3 +178,31 @@ func (pe *PrefixExpression) String() string {
 
 	return out.String()
 }
+
+////////////////////////////////////////////////////////////////
+
+type InfixExpression struct {
+	Token    token.Token // the operator, e.g. +
+	Left     Expression  // the left-hand side expression
+	Operator string      // the operator, e.g. +
+	Right    Expression  // the right-hand side expression
+}
+
+func (ie *InfixExpression) expressionNode() {}
+func (ie *InfixExpression) TokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(") // append the opening parenthesis
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(ie.Right.String())
+	out.WriteString(")") // append the closing parenthesis
+
+	return out.String()
+}
+
+////////////////////////////////////////////////////////////////
