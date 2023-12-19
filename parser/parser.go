@@ -91,9 +91,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	for !p.curTokenIs(token.EOF) { // loop until we reach the end of the input
 		stmt := p.parseStatement() // parse a statement
 
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt) // append it to the Statements field
-		}
+		program.Statements = append(program.Statements, stmt) // append it to the Statements field
 
 		p.nextToken() // advance the tokens
 	}
