@@ -118,6 +118,40 @@ return 993322;
 	}
 }
 
+func TestBooleanExpression(t *testing.T) {
+	input := `true;`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram() // parse the program
+	checkParserErrors(t, p)     // check for parser errors
+
+	if len(program.Statements) != 1 { // check the number of statements
+		t.Fatalf("program does not have enough statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement) // type assertion
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	boolean, ok := stmt.Expression.(*ast.Boolean) // type assertion
+
+	if !ok {
+		t.Fatalf("exp not *ast.Boolean. got=%T", stmt.Expression)
+	}
+
+	if boolean.Value != true { // check the value
+		t.Errorf("boolean.Value not %t. got=%t", true, boolean.Value)
+	}
+
+	if boolean.TokenLiteral() != "true" { // check the token literal
+		t.Errorf("boolean.TokenLiteral not %s. got=%s", "true", boolean.TokenLiteral())
+	}
+}
+
 func TestIdentifier(t *testing.T) {
 	input := `foobar;`
 
@@ -345,4 +379,63 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}
 	}
+}
+
+func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
+	ident, ok := exp.(*ast.Identifier) // type assertion
+
+	if !ok {
+		t.Errorf("exp not *ast.Identifier. got=%T", exp)
+		return false
+	}
+
+	if ident.Value != value { // check the value
+		t.Errorf("ident.Value not %s. got=%s", value, ident.Value)
+		return false
+	}
+
+	if ident.TokenLiteral() != value { // check the token literal
+		t.Errorf("ident.TokenLiteral not %s. got=%s", value, ident.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
+func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
+	switch v := expected.(type) { // check the type
+	case int:
+		return testIntegerLiteral(t, exp, int64(v)) // check the integer literal
+	case int64:
+		return testIntegerLiteral(t, exp, v) // check the integer literal
+	case string:
+		return testIdentifier(t, exp, v) // check the identifier
+	}
+
+	t.Errorf("type of exp not handled. got=%T", exp)
+	return false
+}
+
+func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, operator string, right interface{}) bool {
+	opExp, ok := exp.(*ast.InfixExpression) // type assertion
+
+	if !ok {
+		t.Errorf("exp is not ast.InfixExpression. got=%T(%s)", exp, exp)
+		return false
+	}
+
+	if !testLiteralExpression(t, opExp.Left, left) { // check the left expression
+		return false
+	}
+
+	if opExp.Operator != operator { // check the operator
+		t.Errorf("exp.Operator is not '%s'. got=%q", operator, opExp.Operator)
+		return false
+	}
+
+	if !testLiteralExpression(t, opExp.Right, right) { // check the right expression
+		return false
+	}
+
+	return true
 }
