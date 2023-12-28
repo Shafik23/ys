@@ -224,10 +224,14 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct { // a slice of structs
 		input    string
 		operator string
-		value    int64
+		value    any
 	}{
 		{"!5;", "!", 5}, // the input, the operator, and the value
 		{"-15;", "-", 15},
+		{"!foobar;", "!", "foobar"},
+		{"-foobar;", "-", "foobar"},
+		{"!true;", "!", true},
+		{"!false;", "!", false},
 	}
 
 	for _, tt := range prefixTests { // iterate over the slice
@@ -257,7 +261,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
 		}
 
-		if !testIntegerLiteral(t, exp.Right, tt.value) { // check the value
+		if !testLiteralExpression(t, exp.Right, tt.value) { // check the value
 			return
 		}
 	}
