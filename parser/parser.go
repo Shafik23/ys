@@ -56,6 +56,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(token.IF, p.parseIfExpression)
 
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
@@ -293,4 +294,58 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	}
 
 	return exp
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	expression := &ast.IfExpression{Token: p.curToken} // create a new if expression node and set its token field
+
+	if !p.expectPeek(token.LPAREN) { // if the next token is not a left parenthesis
+		return nil
+	}
+
+	p.nextToken() // advance the tokens
+
+	expression.Condition = p.parseExpression(LOWEST) // parse the condition
+
+	if !p.expectPeek(token.RPAREN) { // if the next token is not a right parenthesis
+		return nil
+	}
+
+	if !p.expectPeek(token.LBRACE) { // if the next token is not a left brace
+		return nil
+	}
+
+	expression.Consequence = p.parseBlockStatement() // parse the consequence
+
+	if p.peekTokenIs(token.ELSE) { // if the next token is an else
+		p.nextToken() // advance the tokens
+
+		if !p.expectPeek(token.LBRACE) { // if the next token is not a left brace
+			return nil
+		}
+
+		expression.Alternative = p.parseBlockStatement() // parse the alternative
+	}
+
+	return expression
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curToken} // create a new block statement node and set its token field
+
+	block.Statements = []ast.Statement{} // initialize the Statements field to an empty slice
+
+	p.nextToken() // advance the tokens
+
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) { // loop until we reach the end of the block
+		stmt := p.parseStatement() // parse a statement
+
+		if stmt != nil { // if the statement is not nil
+			block.Statements = append(block.Statements, stmt) // append it to the Statements field
+		}
+
+		p.nextToken() // advance the tokens
+	}
+
+	return block
 }

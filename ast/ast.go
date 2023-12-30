@@ -220,3 +220,55 @@ func (b *Boolean) TokenLiteral() string {
 func (b *Boolean) String() string {
 	return b.Token.Literal
 }
+
+////////////////////////////////////////////////////////////////
+
+type IfExpression struct {
+	Token       token.Token // the token.IF token
+	Condition   Expression  // the condition expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (ie *IfExpression) expressionNode() {}
+func (ie *IfExpression) TokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *IfExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("if") // append the if keyword
+	out.WriteString(ie.Condition.String())
+	out.WriteString(" ")
+	out.WriteString(ie.Consequence.String())
+
+	if ie.Alternative != nil { // if the if expression has an alternative block
+		out.WriteString("else ")
+		out.WriteString(ie.Alternative.String())
+	}
+
+	return out.String()
+}
+
+////////////////////////////////////////////////////////////////
+
+type BlockStatement struct {
+	Token      token.Token // the token.LBRACE token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode() {}
+func (bs *BlockStatement) TokenLiteral() string {
+	return bs.Token.Literal
+}
+
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+
+	for _, s := range bs.Statements { // iterate over the statements
+		out.WriteString(s.String()) // append the string representation of each statement to the buffer
+	}
+
+	return out.String()
+}
