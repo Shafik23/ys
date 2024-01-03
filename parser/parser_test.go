@@ -578,3 +578,83 @@ func TestIfElseExpression(t *testing.T) {
 		return
 	}
 }
+
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `fn(x, y) { x + y; }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram() // parse the program
+	checkParserErrors(t, p)     // check for parser errors
+
+	if len(program.Statements) != 1 { // check the number of statements
+		t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
+			1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement) // type assertion
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	function, ok := stmt.Expression.(*ast.FunctionLiteral) // type assertion
+
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.FunctionLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(function.Parameters) != 2 { // check the number of parameters
+		t.Fatalf("function literal parameters wrong. want 2, got=%d\n",
+			len(function.Parameters))
+	}
+
+	testLiteralExpression(t, function.Parameters[0], "x") // check the first parameter
+	testLiteralExpression(t, function.Parameters[1], "y") // check the second parameter
+
+	if len(function.Body.Statements) != 1 { // check the number of statements
+		t.Fatalf("function.Body.Statements has not 1 statements. got=%d\n",
+			len(function.Body.Statements))
+	}
+
+	bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement) // type assertion
+
+	if !ok {
+		t.Fatalf("function body stmt is not ast.ExpressionStatement. got=%T",
+			function.Body.Statements[0])
+	}
+
+	testInfixExpression(t, bodyStmt.Expression, "x", "+", "y") // check the body
+}
+
+func TestFunctionParameterParsing(t *testing.T) {
+	tests := []struct { // a slice of structs
+		input          string
+		expectedParams []string
+	}{
+		{input: "fn() {};", expectedParams: []string{}}, // the input and the expected parameters
+		{input: "fn(x) {};", expectedParams: []string{"x"}},
+		{input: "fn(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
+	}
+
+	for _, tt := range tests { // iterate over the slice
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram() // parse the program
+		checkParserErrors(t, p)     // check for parser errors
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement) // type assertion
+
+		function := stmt.Expression.(*ast.FunctionLiteral) // type assertion
+
+		if len(function.Parameters) != len(tt.expectedParams) { // check the number of parameters
+			t.Errorf("length parameters wrong. want %d, got=%d\n",
+				len(tt.expectedParams), len(function.Parameters))
+		}
+
+		for i, ident := range tt.expectedParams { // iterate over the expected parameters
+			testLiteralExpression(t, function.Parameters[i], ident) // check the parameter
+		}
+	}
+}

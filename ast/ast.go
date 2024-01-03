@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/shafik23/ys/token"
 )
@@ -57,6 +58,7 @@ type LetStatement struct {
 }
 
 func (ls *LetStatement) statementNode() {}
+
 func (ls *LetStatement) TokenLiteral() string {
 	return ls.Token.Literal
 }
@@ -86,6 +88,7 @@ type Identifier struct {
 }
 
 func (i *Identifier) expressionNode() {}
+
 func (i *Identifier) TokenLiteral() string {
 	return i.Token.Literal
 }
@@ -102,6 +105,7 @@ type ReturnStatement struct {
 }
 
 func (rs *ReturnStatement) statementNode() {}
+
 func (rs *ReturnStatement) TokenLiteral() string {
 	return rs.Token.Literal
 }
@@ -128,6 +132,7 @@ type ExpressionStatement struct {
 }
 
 func (es *ExpressionStatement) statementNode() {}
+
 func (es *ExpressionStatement) TokenLiteral() string {
 	return es.Token.Literal
 }
@@ -148,6 +153,7 @@ type IntegerLiteral struct {
 }
 
 func (il *IntegerLiteral) expressionNode() {}
+
 func (il *IntegerLiteral) TokenLiteral() string {
 	return il.Token.Literal
 }
@@ -164,6 +170,7 @@ type PrefixExpression struct {
 }
 
 func (pe *PrefixExpression) expressionNode() {}
+
 func (pe *PrefixExpression) TokenLiteral() string {
 	return pe.Token.Literal
 }
@@ -189,6 +196,7 @@ type InfixExpression struct {
 }
 
 func (ie *InfixExpression) expressionNode() {}
+
 func (ie *InfixExpression) TokenLiteral() string {
 	return ie.Token.Literal
 }
@@ -213,6 +221,7 @@ type Boolean struct {
 }
 
 func (b *Boolean) expressionNode() {}
+
 func (b *Boolean) TokenLiteral() string {
 	return b.Token.Literal
 }
@@ -231,6 +240,7 @@ type IfExpression struct {
 }
 
 func (ie *IfExpression) expressionNode() {}
+
 func (ie *IfExpression) TokenLiteral() string {
 	return ie.Token.Literal
 }
@@ -259,6 +269,7 @@ type BlockStatement struct {
 }
 
 func (bs *BlockStatement) statementNode() {}
+
 func (bs *BlockStatement) TokenLiteral() string {
 	return bs.Token.Literal
 }
@@ -269,6 +280,38 @@ func (bs *BlockStatement) String() string {
 	for _, s := range bs.Statements { // iterate over the statements
 		out.WriteString(s.String()) // append the string representation of each statement to the buffer
 	}
+
+	return out.String()
+}
+
+////////////////////////////////////////////////////////////////
+
+type FunctionLiteral struct {
+	Token      token.Token // the token.FUNCTION token
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (fl *FunctionLiteral) expressionNode() {}
+
+func (fl *FunctionLiteral) TokenLiteral() string {
+	return fl.Token.Literal
+}
+
+func (fl *FunctionLiteral) String() string {
+	var out bytes.Buffer
+
+	params := []string{} // create a slice of strings
+
+	for _, p := range fl.Parameters { // iterate over the parameters
+		params = append(params, p.String()) // append the string representation of each parameter to the slice
+	}
+
+	out.WriteString(fl.TokenLiteral())
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", ")) // join the parameters with a comma and a space
+	out.WriteString(") ")
+	out.WriteString(fl.Body.String())
 
 	return out.String()
 }

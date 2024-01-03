@@ -61,6 +61,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 
+	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
+
 	// Register infix parse functions
 	p.infixParseFns = make(map[token.TokenType]infixParseFn) // initialize the map
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -77,6 +79,54 @@ func New(l *lexer.Lexer) *Parser {
 	p.nextToken()
 
 	return p
+}
+
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+	lit := &ast.FunctionLiteral{Token: p.curToken} // create a new function literal node and set its token field
+
+	if !p.expectPeek(token.LPAREN) { // if the next token is not a left parenthesis
+		return nil
+	}
+
+	lit.Parameters = p.parseFunctionParameters() // parse the function parameters
+
+	if !p.expectPeek(token.LBRACE) { // if the next token is not a left brace
+		return nil
+	}
+
+	lit.Body = p.parseBlockStatement() // parse the function body
+
+	return lit
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	identifiers := []*ast.Identifier{} // initialize the identifiers slice to an empty slice
+
+	if p.peekTokenIs(token.RPAREN) { // if the next token is a right parenthesis
+		p.nextToken() // advance the tokens
+		return identifiers
+	}
+
+	p.nextToken() // advance the tokens
+
+	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal} // create a new identifier node and set its token and value fields
+
+	identifiers = append(identifiers, ident) // append it to the identifiers slice
+
+	for p.peekTokenIs(token.COMMA) { // loop until we reach the end of the parameters
+		p.nextToken() // advance the tokens
+		p.nextToken() // advance the tokens
+
+		ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal} // create a new identifier node and set its token and value fields
+
+		identifiers = append(identifiers, ident) // append it to the identifiers slice
+	}
+
+	if !p.expectPeek(token.RPAREN) { // if the next token is not a right parenthesis
+		return nil
+	}
+
+	return identifiers
 }
 
 func (p *Parser) parseBoolean() ast.Expression {
