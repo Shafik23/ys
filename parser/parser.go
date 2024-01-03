@@ -29,6 +29,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN:   CALL,
 }
 
 type prefixParseFn func() ast.Expression
@@ -74,11 +75,44 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
 
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
+
 	// Read two tokens, so curToken and peekToken are both set.
 	p.nextToken()
 	p.nextToken()
 
 	return p
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	// create a new call expression node and set its token and function fields
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseCallArguments() // parse the call arguments
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{} // initialize the arguments slice to an empty slice
+
+	if p.peekTokenIs(token.RPAREN) { // if the next token is a right parenthesis
+		p.nextToken() // advance the tokens
+		return args   // return the empty slice
+	}
+
+	p.nextToken()                                  // advance the tokens
+	args = append(args, p.parseExpression(LOWEST)) // parse the first argument
+
+	for p.peekTokenIs(token.COMMA) { // loop until we reach the end of the arguments
+		p.nextToken()                                  // advance the tokens
+		p.nextToken()                                  // advance the tokens
+		args = append(args, p.parseExpression(LOWEST)) // parse the next argument
+	}
+
+	if !p.expectPeek(token.RPAREN) { // if the next token is not a right parenthesis
+		return nil
+	}
+
+	return args
 }
 
 func (p *Parser) parseFunctionLiteral() ast.Expression {

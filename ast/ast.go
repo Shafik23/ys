@@ -315,3 +315,34 @@ func (fl *FunctionLiteral) String() string {
 
 	return out.String()
 }
+
+////////////////////////////////////////////////////////////////
+
+type CallExpression struct {
+	Token     token.Token // the token.LPAREN token
+	Function  Expression  // the function expression
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode() {}
+
+func (ce *CallExpression) TokenLiteral() string {
+	return ce.Token.Literal
+}
+
+func (ce *CallExpression) String() string {
+	var out bytes.Buffer
+
+	args := []string{} // create a slice of strings
+
+	for _, a := range ce.Arguments { // iterate over the arguments
+		args = append(args, a.String()) // append the string representation of each argument to the slice
+	}
+
+	out.WriteString(ce.Function.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(args, ", ")) // join the arguments with a comma and a space
+	out.WriteString(")")
+
+	return out.String()
+}
