@@ -15,11 +15,6 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}{
 		{"5", 5},
 		{"10", 10},
-		// {"5 + 5 + 5 + 5 - 10", 10},
-		// {"2 * 2 * 2 * 2 * 2", 32},
-		// {"-50 + 100 + -50", 0},
-		// {"5 * 2 + 10", 20},
-		// {"5 + 2 * 10", 25},
 	}
 
 	for _, tt := range tests {
@@ -55,4 +50,36 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 
 	// Return true if the test passed.
 	return true
+}
+
+func TestEvailBooleanExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"true", true},
+		{"false", false},
+	}
+
+	// Iterate over each test case.
+	for _, tt := range tests {
+		// Evaluate the input.
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+func testBooleanObject(t *testing.T, evaluated object.Object, expected bool) {
+	// Cast the object to a boolean.
+	result, ok := evaluated.(*object.Boolean)
+	if !ok {
+		t.Errorf("object is not Boolean. got=%T (%+v)", evaluated, evaluated)
+		return
+	}
+
+	// Compare the value of the boolean.
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
+		return
+	}
 }
