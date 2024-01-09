@@ -1,6 +1,8 @@
 package evaluator
 
 import (
+	"fmt"
+
 	"github.com/shafik23/ys/ast"
 	"github.com/shafik23/ys/object"
 )
@@ -78,8 +80,10 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
 		return nativeBoolToBooleanObject(left != right)
+	case left.Type() != right.Type():
+		return newError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	default:
-		return NULL
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -107,7 +111,7 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case "!=":
 		return nativeBoolToBooleanObject(leftVal != rightVal)
 	default:
-		return NULL
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -117,11 +121,13 @@ func evalProgram(program *ast.Program) object.Object {
 	for _, stmt := range program.Statements {
 		result = Eval(stmt)
 
-		// If the result is indeed a return value, then short-circuit
-		// early and return that value, instead of evaluating the rest
-		// of the statements.
-		if returnValue, ok := result.(*object.ReturnValue); ok {
-			return returnValue.Value
+		switch result := result.(type) {
+		// If the result is a return-value OR an error, then short-circuit early and
+		// return instead of evaluating the rest of the statements.
+		case *object.Error:
+			return result
+		case *object.ReturnValue:
+			return result.Value
 		}
 	}
 
@@ -150,13 +156,13 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 		return evalMinusPrefixOperatorExpression(right)
 	}
 
-	return NULL
+	return newError("unknown operator: %s%s", operator, right.Type())
 }
 
 func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	// Check that the object is an integer.
 	if right.Type() != object.INTEGER_OBJ {
-		return NULL
+		return newError("unknown operator: -%s", right.Type())
 	}
 
 	// Cast the object to an integer.
@@ -185,4 +191,8 @@ func nativeBoolToBooleanObject(input bool) *object.Boolean {
 	}
 
 	return FALSE
+}
+
+func newError(format string, a ...interface{}) *object.Error {
+	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
