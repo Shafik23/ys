@@ -140,7 +140,7 @@ func evalBlockStatement(block *ast.BlockStatement) object.Object {
 	for _, stmt := range block.Statements {
 		result = Eval(stmt)
 
-		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
+		if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {
 			return result
 		}
 	}
