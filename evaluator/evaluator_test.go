@@ -73,6 +73,21 @@ func TestEvailBooleanExpression(t *testing.T) {
 	}{
 		{"true", true},
 		{"false", false},
+		{"5 < 10", true},
+		{"5 > 10", false},
+		{"5 == 5", true},
+		{"5 != 5", false},
+		{"5 == 10", false},
+		{"5 != 10", true},
+		{"true == true", true},
+		{"false == false", true},
+		{"true == false", false},
+		{"true != false", true},
+		{"false != true", true},
+		{"(5 < 10) == true", true},
+		{"(5 < 10) == false", false},
+		{"(5 > 10) == true", false},
+		{"(5 > 10) == false", true},
 	}
 
 	// Iterate over each test case.
