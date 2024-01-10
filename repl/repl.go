@@ -9,6 +9,7 @@ import (
 
 	"github.com/shafik23/ys/evaluator"
 	"github.com/shafik23/ys/lexer"
+	"github.com/shafik23/ys/object"
 	"github.com/shafik23/ys/parser"
 )
 
@@ -31,13 +32,14 @@ func Start(in io.Reader, out io.Writer) {
 		p := parser.New(l)
 
 		program := p.ParseProgram()
+		env := object.NewEnvironment()
 
 		if len(p.Errors()) > 0 {
 			printParserErrors(out, p.Errors())
 			continue
 		}
 
-		evaluated := evaluator.Eval(program)
+		evaluated := evaluator.Eval(program, env)
 
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
