@@ -73,9 +73,81 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		params := node.Parameters
 		body := node.Body
 		return &object.Function{Parameters: params, Body: body, Env: env}
+
+	case *ast.CallExpression:
+		// Evaluate the function.
+		fun := Eval(node.Function, env)
+		if isError(fun) {
+			return fun
+		}
+
+		// Evaluate the arguments.
+		args := evalExpressions(node.Arguments, env)
+		if len(args) == 1 && isError(args[0]) {
+			return args[0]
+		}
+
+		return applyFunction(fun, args)
 	}
 
 	return nil
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+	// Cast the object to a function.
+	function, ok := fn.(*object.Function)
+	if !ok {
+		return newError("not a function: %s", fn.Type())
+	}
+
+	// Create a new environment.
+	extendedEnv := extendFunctionEnv(function, args)
+
+	// Evaluate the body.
+	evaluated := Eval(function.Body, extendedEnv)
+
+	// Return the result.
+	return unwrapReturnValue(evaluated)
+}
+
+func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
+	// Create a new environment.
+	env := object.NewClosureEnvironment(fn.Env)
+
+	// Add the arguments to the environment.
+	for paramIdx, param := range fn.Parameters {
+		env.Set(param.Value, args[paramIdx])
+	}
+
+	// Return the environment.
+	return env
+}
+
+func unwrapReturnValue(obj object.Object) object.Object {
+	// Check if the object is a return-value.
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+
+	// Return the object.
+	return obj
+}
+
+func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
+	var result []object.Object
+
+	// Evaluate each expression.
+	for _, e := range exps {
+		evaluated := Eval(e, env)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+
+		// Append the evaluated expression to the result.
+		result = append(result, evaluated)
+	}
+
+	return result
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
