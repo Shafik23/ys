@@ -1,6 +1,10 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/shafik23/ys/ast"
+)
 
 const (
 	NULL_OBJ         = "NULL"
@@ -8,6 +12,7 @@ const (
 	BOOLEAN_OBJ      = "BOOLEAN"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
 	ERROR_OBJ        = "ERROR"
+	FUNCTION_OBJ     = "FUNCTION"
 )
 
 //////////////////////////////////////////////////
@@ -63,5 +68,20 @@ type Error struct {
 	Message string
 }
 
-func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
+func (e *Error) Inspect() string { return "ERROR: " + e.Message }
+
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
+
+//////////////////////////////////////////////////
+
+type Function struct {
+	Parameters []*ast.Identifier
+	Body       *ast.BlockStatement
+	Env        *Environment
+}
+
+func (f *Function) Inspect() string {
+	return fmt.Sprintf("fn(%s) {\n%s\n}", f.Parameters, f.Body.String())
+}
+
+func (f *Function) Type() ObjectType { return FUNCTION_OBJ }

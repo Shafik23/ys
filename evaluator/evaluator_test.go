@@ -260,3 +260,28 @@ func TestLetStatements(t *testing.T) {
 		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }
+
+func TestFunctionObject(t *testing.T) {
+	// Create a new function.
+	input := "fn(x) { x + 2; };"
+
+	// Evaluate the input.
+	evaluated := testEval(input)
+
+	// Cast the object to a function.
+	fn, ok := evaluated.(*object.Function)
+	if !ok {
+		t.Fatalf("object is not Function. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	// Compare the parameters.
+	if len(fn.Parameters) != 1 {
+		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Parameters)
+	}
+
+	// Compare the body.
+	expectedBody := "(x + 2)"
+	if fn.Body.String() != expectedBody {
+		t.Fatalf("function has wrong body. Body=%q", fn.Body.String())
+	}
+}
