@@ -18,6 +18,7 @@ const PROMPT = ">> "
 // Start launches the REPL, taking input from an io.Reader and sending output to an io.Writer.
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	env := object.NewEnvironment()
 
 	for {
 		fmt.Fprint(out, PROMPT)
@@ -32,7 +33,6 @@ func Start(in io.Reader, out io.Writer) {
 		p := parser.New(l)
 
 		program := p.ParseProgram()
-		env := object.NewEnvironment()
 
 		if len(p.Errors()) > 0 {
 			printParserErrors(out, p.Errors())
