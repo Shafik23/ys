@@ -13,7 +13,7 @@ import (
 	"github.com/shafik23/ys/parser"
 )
 
-const PROMPT = ">> "
+const PROMPT = ">>> "
 
 // Start launches the REPL, taking input from an io.Reader and sending output to an io.Writer.
 func Start(in io.Reader, out io.Writer) {
