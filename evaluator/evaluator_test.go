@@ -246,6 +246,7 @@ func TestErrorHandling(t *testing.T) {
 		}
 		`, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
+		{`"Hello" - "World!"`, "unknown operator: STRING - STRING"},
 	}
 
 	// Iterate over each test case.
@@ -340,4 +341,24 @@ func TestClosures(t *testing.T) {
 	`
 
 	testIntegerObject(t, testEval(input), 4)
+}
+
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " " + "World!";`
+	testStringObject(t, testEval(input), "Hello World!")
+}
+
+func testStringObject(t *testing.T, evaluated object.Object, expected string) {
+	// Cast the object to a string.
+	result, ok := evaluated.(*object.String)
+	if !ok {
+		t.Errorf("object is not String. got=%T (%+v)", evaluated, evaluated)
+		return
+	}
+
+	// Compare the value of the string.
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%q, want=%q", result.Value, expected)
+		return
+	}
 }
