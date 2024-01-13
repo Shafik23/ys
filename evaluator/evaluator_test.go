@@ -362,3 +362,41 @@ func testStringObject(t *testing.T, evaluated object.Object, expected string) {
 		return
 	}
 }
+
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello world")`, 11},
+		{`len(1)`, "argument to `len` not supported, got type INTEGER"},
+		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
+	}
+
+	// Iterate over each test case.
+	for _, tt := range tests {
+		// Evaluate the input.
+		evaluated := testEval(tt.input)
+
+		// Check if the expected value is an integer.
+		integer, ok := tt.expected.(int)
+		if ok {
+			// Compare the value of the integer.
+			testIntegerObject(t, evaluated, int64(integer))
+		} else {
+			// Cast the object to an error.
+			errObj, ok := evaluated.(*object.Error)
+			if !ok {
+				t.Errorf("object is not Error. got=%T (%+v)", evaluated, evaluated)
+				continue
+			}
+
+			// Compare the error message.
+			if errObj.Message != tt.expected {
+				t.Errorf("wrong error message. expected=%q, got=%q", tt.expected, errObj.Message)
+			}
+		}
+	}
+}
