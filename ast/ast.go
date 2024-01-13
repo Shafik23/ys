@@ -363,3 +363,32 @@ func (sl *StringLiteral) TokenLiteral() string {
 func (sl *StringLiteral) String() string {
 	return sl.Token.Literal
 }
+
+////////////////////////////////////////////////////////////////
+
+type ArrayLiteral struct {
+	Token    token.Token // the token.LBRACKET token
+	Elements []Expression
+}
+
+func (al *ArrayLiteral) expressionNode() {}
+
+func (al *ArrayLiteral) TokenLiteral() string {
+	return al.Token.Literal
+}
+
+func (al *ArrayLiteral) String() string {
+	var out bytes.Buffer
+
+	elements := []string{} // create a slice of strings
+
+	for _, el := range al.Elements { // iterate over the elements
+		elements = append(elements, el.String()) // append the string representation of each element to the slice
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", ")) // join the elements with a comma and a space
+	out.WriteString("]")
+
+	return out.String()
+}

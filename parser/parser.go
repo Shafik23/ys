@@ -65,6 +65,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
+	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 
 	// Register infix parse functions
 	p.infixParseFns = make(map[token.TokenType]infixParseFn) // initialize the map
@@ -84,6 +85,36 @@ func New(l *lexer.Lexer) *Parser {
 	p.nextToken()
 
 	return p
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken}          // create a new array literal node and set its token field
+	array.Elements = p.parseExpressionList(token.RBRACKET) // parse the array elements
+	return array
+}
+
+func (p *Parser) parseExpressionList(t token.TokenType) []ast.Expression {
+	list := []ast.Expression{} // initialize the list to an empty slice
+
+	if p.peekTokenIs(t) { // if the next token is a right bracket
+		p.nextToken() // advance the tokens
+		return list   // return the empty slice
+	}
+
+	p.nextToken()                                  // advance the tokens
+	list = append(list, p.parseExpression(LOWEST)) // parse the first element
+
+	for p.peekTokenIs(token.COMMA) { // loop until we reach the end of the elements
+		p.nextToken()                                  // advance the tokens
+		p.nextToken()                                  // advance the tokens
+		list = append(list, p.parseExpression(LOWEST)) // parse the next element
+	}
+
+	if !p.expectPeek(t) { // if the next token is not a right bracket
+		return nil
+	}
+
+	return list
 }
 
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
