@@ -14,6 +14,7 @@ const (
 	ERROR_OBJ        = "ERROR"
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
+	ARRAY_OBJ        = "ARRAY"
 )
 
 //////////////////////////////////////////////////
@@ -93,7 +94,8 @@ type String struct {
 	Value string
 }
 
-func (s *String) Inspect() string  { return s.Value }
+func (s *String) Inspect() string { return s.Value }
+
 func (s *String) Type() ObjectType { return STRING_OBJ }
 
 //////////////////////////////////////////////////
@@ -104,5 +106,30 @@ type Builtin struct {
 	Fn BuiltinFunction
 }
 
-func (b *Builtin) Inspect() string  { return "builtin function" }
+func (b *Builtin) Inspect() string { return "builtin function" }
+
 func (b *Builtin) Type() ObjectType { return FUNCTION_OBJ }
+
+//////////////////////////////////////////////////
+
+type Array struct {
+	Elements []Object
+}
+
+func (ao *Array) Inspect() string {
+	var out string
+	for i, e := range ao.Elements {
+		if i == 0 {
+			out += "["
+		}
+		out += e.Inspect()
+		if i != len(ao.Elements)-1 {
+			out += ", "
+		} else {
+			out += "]"
+		}
+	}
+	return out
+}
+
+func (ao *Array) Type() ObjectType { return ARRAY_OBJ }
