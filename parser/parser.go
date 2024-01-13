@@ -120,32 +120,8 @@ func (p *Parser) parseExpressionList(t token.TokenType) []ast.Expression {
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	// create a new call expression node and set its token and function fields
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
-	exp.Arguments = p.parseCallArguments() // parse the call arguments
+	exp.Arguments = p.parseExpressionList(token.RPAREN) // parse the call arguments
 	return exp
-}
-
-func (p *Parser) parseCallArguments() []ast.Expression {
-	args := []ast.Expression{} // initialize the arguments slice to an empty slice
-
-	if p.peekTokenIs(token.RPAREN) { // if the next token is a right parenthesis
-		p.nextToken() // advance the tokens
-		return args   // return the empty slice
-	}
-
-	p.nextToken()                                  // advance the tokens
-	args = append(args, p.parseExpression(LOWEST)) // parse the first argument
-
-	for p.peekTokenIs(token.COMMA) { // loop until we reach the end of the arguments
-		p.nextToken()                                  // advance the tokens
-		p.nextToken()                                  // advance the tokens
-		args = append(args, p.parseExpression(LOWEST)) // parse the next argument
-	}
-
-	if !p.expectPeek(token.RPAREN) { // if the next token is not a right parenthesis
-		return nil
-	}
-
-	return args
 }
 
 func (p *Parser) parseFunctionLiteral() ast.Expression {
@@ -461,9 +437,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) { // loop until we reach the end of the block
 		stmt := p.parseStatement() // parse a statement
 
-		if stmt != nil { // if the statement is not nil
-			block.Statements = append(block.Statements, stmt) // append it to the Statements field
-		}
+		block.Statements = append(block.Statements, stmt) // append it to the Statements field
 
 		p.nextToken() // advance the tokens
 	}
