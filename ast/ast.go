@@ -392,3 +392,29 @@ func (al *ArrayLiteral) String() string {
 
 	return out.String()
 }
+
+////////////////////////////////////////////////////////////////
+
+type IndexExpression struct {
+	Token token.Token // the token.LBRACKET token
+	Left  Expression  // the left-hand side expression
+	Index Expression  // the index expression
+}
+
+func (ie *IndexExpression) expressionNode() {}
+
+func (ie *IndexExpression) TokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *IndexExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(") // append the opening parenthesis
+	out.WriteString(ie.Left.String())
+	out.WriteString("[")
+	out.WriteString(ie.Index.String())
+	out.WriteString("])") // append the closing parenthesis
+
+	return out.String()
+}
