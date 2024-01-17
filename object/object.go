@@ -16,6 +16,7 @@ const (
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
 	ARRAY_OBJ        = "ARRAY"
+	HASH_OBJ         = "HASH"
 )
 
 //////////////////////////////////////////////////
@@ -161,4 +162,31 @@ func (s *String) HashKey() HashKey {
 	h.Write([]byte(s.Value))
 
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
+
+//////////////////////////////////////////////////
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h *Hash) Inspect() string {
+	var out string
+	for _, pair := range h.Pairs {
+		out += fmt.Sprintf("%s: %s, ", pair.Key.Inspect(), pair.Value.Inspect())
+	}
+	return fmt.Sprintf("{%s}", out)
+}
+
+func (h *Hash) Type() ObjectType { return HASH_OBJ }
+
+//////////////////////////////////////////////////
+
+type Hashable interface {
+	HashKey() HashKey
 }

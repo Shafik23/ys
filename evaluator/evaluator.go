@@ -111,9 +111,45 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return applyFunction(fun, args)
+
+	case *ast.HashLiteral:
+		return evalHashLiteral(node, env)
 	}
 
 	return nil
+}
+
+func evalHashLiteral(node *ast.HashLiteral, env *object.Environment) object.Object {
+	// Create a new hash.
+	pairs := make(map[object.HashKey]object.HashPair)
+
+	// Evaluate each key-value pair.
+	for keyNode, valueNode := range node.Pairs {
+		// Evaluate the key.
+		key := Eval(keyNode, env)
+		if isError(key) {
+			return key
+		}
+
+		// Check that the key is hashable.
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return newError("unusable as hash key: %s", key.Type())
+		}
+
+		// Evaluate the value.
+		value := Eval(valueNode, env)
+		if isError(value) {
+			return value
+		}
+
+		// Add the key-value pair to the hash.
+		hashed := hashKey.HashKey()
+		pairs[hashed] = object.HashPair{Key: key, Value: value}
+	}
+
+	// Return the hash.
+	return &object.Hash{Pairs: pairs}
 }
 
 func evalIndexExpression(left, index object.Object) object.Object {
