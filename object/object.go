@@ -3,6 +3,7 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
+	"strings"
 
 	"github.com/shafik23/ys/ast"
 )
@@ -176,11 +177,13 @@ type Hash struct {
 }
 
 func (h *Hash) Inspect() string {
-	var out string
+	parts := make([]string, 0, len(h.Pairs))
+
 	for _, pair := range h.Pairs {
-		out += fmt.Sprintf("%s: %s, ", pair.Key.Inspect(), pair.Value.Inspect())
+		parts = append(parts, fmt.Sprintf("%s: %s", pair.Key.Inspect(), pair.Value.Inspect()))
 	}
-	return fmt.Sprintf("{%s}", out)
+
+	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
 
 func (h *Hash) Type() ObjectType { return HASH_OBJ }
