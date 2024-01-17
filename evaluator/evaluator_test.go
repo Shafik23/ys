@@ -247,6 +247,7 @@ func TestErrorHandling(t *testing.T) {
 		`, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
 		{`"Hello" - "World!"`, "unknown operator: STRING - STRING"},
+		{`{"name": "MadHatter"}[fn(x) { x }];`, "unusable as hash key: FUNCTION"},
 	}
 
 	// Iterate over each test case.
@@ -527,5 +528,36 @@ func TestHashLiterals(t *testing.T) {
 
 		// Compare the value of the integer.
 		testIntegerObject(t, pair.Value, expectedValue)
+	}
+}
+
+func TestHashIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`{"foo": 5}["foo"]`, 5},
+		{`{"foo": 5}["bar"]`, nil},
+		{`let key = "foo"; {"foo": 5}[key]`, 5},
+		{`{}["foo"]`, nil},
+		{`{5: 5}[5]`, 5},
+		{`{true: 5}[true]`, 5},
+		{`{false: 5}[false]`, 5},
+	}
+
+	// Iterate over each test case.
+	for _, tt := range tests {
+		// Evaluate the input.
+		evaluated := testEval(tt.input)
+
+		// Check if the expected value is an integer.
+		integer, ok := tt.expected.(int)
+		if ok {
+			// Compare the value of the integer.
+			testIntegerObject(t, evaluated, int64(integer))
+		} else {
+			// Compare the value of the null.
+			testNullObject(t, evaluated)
+		}
 	}
 }
