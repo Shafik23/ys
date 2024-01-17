@@ -418,3 +418,32 @@ func (ie *IndexExpression) String() string {
 
 	return out.String()
 }
+
+////////////////////////////////////////////////////////////////
+
+type HashLiteral struct {
+	Token token.Token // the token.LBRACE token
+	Pairs map[Expression]Expression
+}
+
+func (hl *HashLiteral) expressionNode() {}
+
+func (hl *HashLiteral) TokenLiteral() string {
+	return hl.Token.Literal
+}
+
+func (hl *HashLiteral) String() string {
+	var out bytes.Buffer
+
+	pairs := []string{} // create a slice of strings
+
+	for key, value := range hl.Pairs { // iterate over the pairs
+		pairs = append(pairs, key.String()+":"+value.String()) // append the string representation of each pair to the slice
+	}
+
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", ")) // join the pairs with a comma and a space
+	out.WriteString("}")
+
+	return out.String()
+}
